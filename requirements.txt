@@ -1,3 +1,5 @@
+# Production requirements for Railway deployment
+# Core PIKE-RAG dependencies
 bs4
 chromadb
 dacite
@@ -21,3 +23,25 @@ tqdm
 transformers
 unstructured
 word2number
+
+# Additional dependencies for examples
+python-docx
+langchain-openai
+pdf2image
+opencv-python
+unstructured_inference
+pikepdf
+python-dotenv
+datasets
+ragatouille
+unstructured_pytesseract
+pytesseract
+
+# Web application dependencies
+Flask>=2.3.0
+Flask-CORS>=4.0.0
+gunicorn>=21.2.0
+Werkzeug>=2.3.0
+
+# Production server
+gunicorn

@@ -1,6 +1,5 @@
 [build]
 builder = "nixpacks"
-buildCommand = "pip install -r requirements-production.txt"
 
 [deploy]
 startCommand = "python webapp/app.py"
