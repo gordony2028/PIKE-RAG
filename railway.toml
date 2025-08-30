@@ -2,7 +2,7 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "python webapp/app.py"
+startCommand = "python webapp/app_lightweight.py"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 

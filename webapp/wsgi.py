@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-WSGI entry point for production deployment
+WSGI entry point for Railway deployment - Lightweight version
 """
 import os
 import sys
@@ -8,9 +8,10 @@ import sys
 # Add the project root to Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app import app, initialize_pikerag
+# Use lightweight app for Railway deployment
+from app_lightweight import app, initialize_pikerag
 
-# Initialize PIKE-RAG components for production
+# Initialize components
 if not initialize_pikerag():
     print("❌ Failed to initialize PIKE-RAG components")
     sys.exit(1)
