@@ -1,19 +1,16 @@
 #!/usr/bin/env python3
 """
-WSGI entry point for Railway deployment - Minimal version
+WSGI entry point for Railway deployment - Standalone version
 """
 import os
 import sys
 
-# Add the project root to Python path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-# Use minimal app to avoid transformers dependency
-from app_minimal import app, initialize_minimal
+# Use completely standalone app - no PIKE-RAG imports
+from app_standalone import app, initialize_standalone
 
 # Initialize components
-if not initialize_minimal():
-    print("❌ Failed to initialize minimal components")
+if not initialize_standalone():
+    print("❌ Failed to initialize standalone components")
     sys.exit(1)
 
 if __name__ == "__main__":
