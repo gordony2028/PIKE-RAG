@@ -413,8 +413,8 @@ def ask_question():
         # Add user message to conversation
         conversation_manager.add_message(session_id, 'user', question)
         
-        # Get conversation history
-        history = conversation_manager.get_conversation_history(session_id)
+        # Get conversation history as dictionaries for LLM
+        history = conversation_manager.get_context_for_llm(session_id)
         
         # Retrieve relevant documents if requested
         sources = []
@@ -482,9 +482,8 @@ def generate_simple_answer(question: str, sources: List[str], history: List[dict
             {"role": "system", "content": "You are a helpful AI assistant. Use the provided context to answer questions accurately."}
         ]
         
-        # Add conversation history (last 4 messages)
-        for msg in history[-4:]:
-            messages.append({"role": msg['role'], "content": msg['content']})
+        # Add conversation history (already formatted for LLM)
+        messages.extend(history[-4:] if len(history) > 4 else history)
         
         # Add context if available
         if sources:
@@ -524,6 +523,128 @@ def get_documents():
         return jsonify(documents)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/examples')
+def get_examples():
+    """Get example questions for the interface"""
+    try:
+        examples = [
+            {
+                'category': 'General Knowledge',
+                'questions': [
+                    'What is the capital of France?',
+                    'Who invented the telephone?',
+                    'What is the largest planet in our solar system?'
+                ]
+            },
+            {
+                'category': 'Science',
+                'questions': [
+                    'What is photosynthesis?',
+                    'How does DNA replication work?',
+                    'What causes earthquakes?'
+                ]
+            },
+            {
+                'category': 'Technology',
+                'questions': [
+                    'What is artificial intelligence?',
+                    'How does machine learning work?',
+                    'What is the difference between HTTP and HTTPS?'
+                ]
+            },
+            {
+                'category': 'Complex Reasoning',
+                'questions': [
+                    'If I have 3 apples and give away 2, then buy 5 more, how many do I have?',
+                    'What are the pros and cons of renewable energy?',
+                    'How might climate change affect food production?'
+                ]
+            }
+        ]
+        return jsonify(examples)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/system/info')
+def get_system_info():
+    """Get system information and feature status"""
+    try:
+        return jsonify({
+            'status': 'operational',
+            'version': 'railway-full-v1.0',
+            'features': {
+                'document_upload': doc_processor is not None,
+                'conversation_management': conversation_manager is not None,
+                'advanced_reasoning': reasoning_manager is not None,
+                'vector_search': doc_processor.chroma_client is not None if doc_processor else False,
+                'openai_integration': openai_client is not None
+            },
+            'capabilities': [
+                'Document Processing (PDF, DOCX, TXT)',
+                'Semantic Search with OpenAI Embeddings',
+                'Multi-turn Conversations',
+                'Advanced Reasoning Strategies',
+                'Session Management',
+                'Knowledge Base Management'
+            ],
+            'deployment': 'Railway',
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
+@app.route('/api/knowledge-bases')
+def get_knowledge_bases():
+    """Get available knowledge bases"""
+    try:
+        if not doc_processor:
+            return jsonify([])
+        
+        documents = doc_processor.get_available_documents()
+        
+        # Group documents into knowledge bases
+        knowledge_bases = []
+        
+        if documents:
+            knowledge_bases.append({
+                'id': 'documents',
+                'name': 'Uploaded Documents',
+                'description': 'Documents you have uploaded and processed',
+                'document_count': len(documents),
+                'status': 'ready',
+                'documents': documents
+            })
+        
+        # Default knowledge base
+        knowledge_bases.append({
+            'id': 'general',
+            'name': 'General Knowledge',
+            'description': 'General AI knowledge without specific documents',
+            'document_count': 0,
+            'status': 'ready',
+            'documents': []
+        })
+        
+        return jsonify(knowledge_bases)
+        
+    except Exception as e:
+        print(f"Error getting knowledge bases: {e}")
+        return jsonify({
+            'error': str(e),
+            'fallback': [{
+                'id': 'general',
+                'name': 'General Knowledge',
+                'description': 'General AI knowledge (fallback mode)',
+                'document_count': 0,
+                'status': 'ready',
+                'documents': []
+            }]
+        }), 500
 
 @app.route('/api/health')
 def health_check():
