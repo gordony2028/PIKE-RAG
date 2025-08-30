@@ -10,13 +10,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 pip install -r requirements.txt
 pip install -r examples/requirements.txt
 
-# Set up PYTHONPATH
+# Set up PYTHONPATH - Required for dynamic module loading
 export PYTHONPATH=$PWD  # Linux/Mac
 $Env:PYTHONPATH=$PWD    # Windows PowerShell
 ```
 
 ### Environment Variables
-Create a `.env` file in `env_configs/` directory with the following format:
+Create a `.env` file in `env_configs/` directory:
 
 **For Azure OpenAI Client:**
 ```ini
@@ -24,6 +24,11 @@ OPENAI_API_TYPE = "azure"
 AZURE_OPENAI_ENDPOINT = "https://xxx.openai.azure.com/"
 OPENAI_API_VERSION = "2024-08-01-preview"
 AZURE_OPENAI_API_KEY = "YOUR-API-KEY"
+```
+
+**For Standard OpenAI API:**
+```ini
+OPENAI_API_KEY = "YOUR-API-KEY"
 ```
 
 **For Azure Meta LLaMA Client:**
@@ -159,3 +164,108 @@ Built-in support for multi-hop QA datasets:
 - **MuSiQue, HotpotQA, 2WikiMultiHopQA**: Multi-hop reasoning benchmarks
 - **Natural Questions, TriviaQA**: Single-hop factual QA
 - Custom dataset loaders in `data_process/open_benchmarks/`
+
+## Testing and Validation
+
+### Running Tests
+The framework includes evaluation workflows with multiple metrics:
+
+```bash
+# Run evaluation workflow
+python examples/evaluate.py PATH-TO-YAML-CONFIG
+
+# Example evaluation on MuSiQue dataset
+python examples/evaluate.py examples/musique/configs/atomic_decompose.yml
+```
+
+### Available Evaluation Metrics
+- **Exact Match (EM)**: Exact string matching accuracy
+- **F1 Score**: Token-level F1 between prediction and ground truth
+- **ROUGE**: ROUGE-L scores for semantic similarity
+- **LLM-based Evaluation**: LLM-powered semantic evaluation
+
+### Cache Management
+LLM responses are automatically cached using PickleDB:
+- Cache files stored in logs directory with experiment name prefix
+- Automatic cache key generation based on model, prompt, and parameters
+- Set `auto_dump: true` in config for immediate cache writing
+
+## Creating Custom Components
+
+### Adding New LLM Clients
+Extend `BaseLLMClient` and implement:
+```python
+from pikerag.llm_client.base import BaseLLMClient
+
+class CustomLLMClient(BaseLLMClient):
+    def run(self, prompt: str, **kwargs) -> str:
+        # Implement your LLM client logic
+        pass
+```
+
+### Adding New Retrievers
+Extend `BaseQaRetriever`:
+```python
+from pikerag.knowledge_retrievers.base_qa_retriever import BaseQaRetriever
+
+class CustomRetriever(BaseQaRetriever):
+    def retrieve(self, query: str, **kwargs) -> List[dict]:
+        # Implement retrieval logic
+        pass
+```
+
+### Configuration-Driven Architecture
+All components are instantiated via YAML configuration using the dynamic loading system:
+- `module_path`: Python module containing the class
+- `class_name`: Name of the class to instantiate  
+- `args`: Constructor arguments as key-value pairs
+- `llm_config`: LLM-specific parameters passed to client
+
+## Troubleshooting
+
+### Common Issues
+- **Import Errors**: Ensure `PYTHONPATH` is set correctly for dynamic module loading
+- **Missing Dependencies**: Install both `requirements.txt` and `examples/requirements.txt`
+- **Environment Variables**: Verify `.env` file is in `env_configs/` directory
+- **Cache Issues**: Check write permissions in log directory for PickleDB cache files
+
+### Debugging Configuration
+- YAML configs are copied to log directories for reproducibility
+- Enable detailed logging by setting appropriate log levels in config
+- Cache files can be inspected to verify LLM client behavior
+
+## Deployment
+
+### Railway Deployment
+The project includes Railway deployment configuration:
+
+```bash
+# Deploy to Railway (requires Railway account)
+# See DEPLOYMENT.md for complete guide
+
+# Key files:
+# - railway.toml: Railway deployment configuration
+# - nixpacks.toml: Build configuration
+# - requirements-production.txt: Production dependencies
+# - .env.railway.example: Environment variable template
+```
+
+### Local Web Application
+Run the Flask web application locally:
+
+```bash
+# Ensure environment variables are set
+export PYTHONPATH=$PWD
+
+# Run web app
+python webapp/app.py
+
+# Or use the enhanced version
+python webapp/app_enhanced.py
+```
+
+### API Endpoints
+- `GET /` - Web interface
+- `POST /api/ask` - Submit questions (JSON: `{"question": "your question"}`)
+- `GET /api/health` - Health check
+- `GET /api/examples` - Get example questions

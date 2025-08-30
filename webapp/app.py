@@ -34,9 +34,31 @@ def initialize_pikerag():
     global client, logger
     
     try:
-        # Load environment variables
-        env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'env_configs', '.env')
-        load_dot_env(env_path)
+        # Load environment variables - try multiple locations
+        env_paths = [
+            os.path.join(os.path.dirname(os.path.dirname(__file__)), 'env_configs', '.env'),
+            os.path.join(os.path.dirname(__file__), '.env'),
+            '.env'
+        ]
+        
+        env_loaded = False
+        for env_path in env_paths:
+            if os.path.exists(env_path):
+                try:
+                    load_dot_env(env_path)
+                    env_loaded = True
+                    print(f"✅ Loaded environment from: {env_path}")
+                    break
+                except Exception as e:
+                    print(f"⚠️  Failed to load {env_path}: {e}")
+                    continue
+        
+        # For Railway deployment, environment variables are set directly
+        if not env_loaded and os.environ.get('RAILWAY_ENVIRONMENT'):
+            print("✅ Running on Railway - using environment variables")
+            env_loaded = True
+        elif not env_loaded:
+            print("⚠️  No .env file found - ensure environment variables are set")
         
         # Create logger
         log_dir = os.path.join(os.path.dirname(__file__), 'logs')
@@ -56,6 +78,8 @@ def initialize_pikerag():
         
     except Exception as e:
         print(f"❌ Failed to initialize PIKE-RAG: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 @app.route('/')
@@ -191,8 +215,12 @@ if __name__ == '__main__':
     print("🚀 Starting PIKE-RAG Web Application...")
     
     if initialize_pikerag():
-        print("🌐 Web app running at: http://localhost:5001")
-        app.run(debug=True, host='0.0.0.0', port=5001)
+        # Get port from environment variable (Railway sets PORT)
+        port = int(os.environ.get('PORT', 5001))
+        debug_mode = os.environ.get('FLASK_ENV', 'production') == 'development'
+        
+        print(f"🌐 Web app running on port: {port}")
+        app.run(debug=debug_mode, host='0.0.0.0', port=port)
     else:
         print("❌ Failed to start web application")
         sys.exit(1)

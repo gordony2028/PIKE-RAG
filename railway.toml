@@ -1,0 +1,14 @@
+[build]
+builder = "nixpacks"
+buildCommand = "pip install -r requirements-production.txt"
+
+[deploy]
+startCommand = "python webapp/app.py"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+[env]
+# Environment variables will be set via Railway dashboard or CLI
+PORT = 5001
+PYTHONPATH = "."
+PYTHONUNBUFFERED = "1"
