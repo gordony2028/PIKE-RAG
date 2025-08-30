@@ -1,0 +1,20 @@
+PIKE-RAG Test Document
+
+This is a test document for the PIKE-RAG enhanced web application.
+
+Key Features:
+- Advanced reasoning strategies (generation, self-ask, atomic decomposition)
+- Multi-turn conversations with session memory
+- Document upload and processing
+- Custom knowledge base management
+- Vector similarity search using ChromaDB
+- Azure OpenAI integration
+
+Technical Stack:
+- Backend: Flask web framework
+- Database: ChromaDB for vector storage
+- Embeddings: Sentence Transformers
+- LLM: Azure OpenAI GPT-4
+- Frontend: HTML, CSS, JavaScript
+
+This document can be used to test the document upload, processing, and retrieval functionality.

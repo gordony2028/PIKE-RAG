@@ -144,3 +144,13 @@ cython_debug/
 env_configs/
 data/
 logs/
+
+# Web app runtime data
+webapp/uploads/
+webapp/sessions/
+webapp/knowledge_base/
+webapp/logs/
+
+# Test files
+test_*.py
+test_config.yml

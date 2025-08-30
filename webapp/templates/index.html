@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIKE-RAG - Knowledge Assistant</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="title">
+                    <i class="fas fa-brain"></i>
+                    PIKE-RAG
+                    <span class="subtitle">Knowledge Assistant</span>
+                </h1>
+                <div class="status-indicator">
+                    <span id="status-dot" class="status-dot"></span>
+                    <span id="status-text">Checking connection...</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Interface -->
+        <main class="main-content">
+            <!-- Question Input Section -->
+            <div class="question-section">
+                <div class="input-container">
+                    <div class="input-wrapper">
+                        <textarea 
+                            id="question-input" 
+                            placeholder="Ask me anything... (e.g., What is artificial intelligence?)"
+                            rows="3"
+                        ></textarea>
+                        <button id="ask-button" class="ask-button" disabled>
+                            <i class="fas fa-paper-plane"></i>
+                            <span>Ask</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Example Questions -->
+                <div class="examples-section">
+                    <h3><i class="fas fa-lightbulb"></i> Try these examples:</h3>
+                    <div id="examples-container" class="examples-container">
+                        <div class="loading-examples">Loading examples...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="results-section" class="results-section" style="display: none;">
+                <div class="results-header">
+                    <h2><i class="fas fa-comments"></i> Conversation</h2>
+                    <button id="clear-button" class="clear-button">
+                        <i class="fas fa-trash"></i> Clear
+                    </button>
+                </div>
+                <div id="conversation" class="conversation"></div>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="loading" class="loading" style="display: none;">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                </div>
+                <div class="loading-text">
+                    <div class="loading-step">Processing your question...</div>
+                    <div class="loading-substep">This may take a few moments</div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>
+                <i class="fas fa-code"></i>
+                Powered by PIKE-RAG & Azure OpenAI
+                <span class="version">v1.0</span>
+            </p>
+        </footer>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

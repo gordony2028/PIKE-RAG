@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIKE-RAG Enhanced - Advanced Knowledge Assistant</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style_enhanced.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1 class="sidebar-title">
+                    <i class="fas fa-brain"></i>
+                    PIKE-RAG
+                </h1>
+                <span class="version-badge">Enhanced</span>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-section="chat">
+                    <i class="fas fa-comments"></i>
+                    <span>Chat</span>
+                </button>
+                <button class="nav-item" data-section="knowledge">
+                    <i class="fas fa-database"></i>
+                    <span>Knowledge Base</span>
+                </button>
+                <button class="nav-item" data-section="sessions">
+                    <i class="fas fa-history"></i>
+                    <span>Sessions</span>
+                </button>
+                <button class="nav-item" data-section="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </button>
+            </nav>
+
+            <!-- Status -->
+            <div class="sidebar-status">
+                <div class="status-indicator">
+                    <span id="status-dot" class="status-dot"></span>
+                    <span id="status-text">Connecting...</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Chat Section -->
+            <div id="chat-section" class="content-section active">
+                <div class="chat-container">
+                    <!-- Chat Header -->
+                    <div class="chat-header">
+                        <div class="chat-title">
+                            <h2>Knowledge Assistant</h2>
+                            <div class="chat-options">
+                                <select id="reasoning-strategy" class="select-input">
+                                    <option value="generation">Direct Answer</option>
+                                    <option value="self_ask">Self-Ask Reasoning</option>
+                                    <option value="atomic_decomposition">Atomic Decomposition</option>
+                                </select>
+                                <select id="knowledge-base" class="select-input">
+                                    <option value="documents">Default Knowledge Base</option>
+                                </select>
+                                <button id="new-session-btn" class="icon-button" title="New Session">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Input Area -->
+                    <div class="input-area">
+                        <div class="input-container">
+                            <textarea 
+                                id="question-input" 
+                                placeholder="Ask me anything... I can now use documents, remember our conversation, and reason through complex problems!"
+                                rows="2"
+                            ></textarea>
+                            <div class="input-controls">
+                                <label class="checkbox-container">
+                                    <input type="checkbox" id="use-retrieval" checked>
+                                    <span class="checkmark"></span>
+                                    Use Knowledge Base
+                                </label>
+                                <button id="ask-button" class="ask-button" disabled>
+                                    <i class="fas fa-paper-plane"></i>
+                                    <span>Ask</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Conversation Area -->
+                    <div class="conversation-area">
+                        <div id="conversation" class="conversation"></div>
+                        
+                        <!-- Loading Indicator -->
+                        <div id="loading" class="loading" style="display: none;">
+                            <div class="loading-content">
+                                <div class="loading-spinner">
+                                    <div class="spinner"></div>
+                                </div>
+                                <div class="loading-text">
+                                    <div class="loading-step">Processing your question...</div>
+                                    <div class="loading-substep">Using <span id="current-strategy">generation</span> strategy</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Examples Section -->
+                    <div class="examples-section">
+                        <h3><i class="fas fa-lightbulb"></i> Example Questions by Strategy:</h3>
+                        <div id="examples-container" class="examples-container">
+                            <div class="loading-examples">Loading examples...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Knowledge Base Section -->
+            <div id="knowledge-section" class="content-section">
+                <div class="knowledge-container">
+                    <div class="section-header">
+                        <h2><i class="fas fa-database"></i> Knowledge Base Management</h2>
+                        <button id="upload-btn" class="primary-button">
+                            <i class="fas fa-upload"></i>
+                            Upload Documents
+                        </button>
+                    </div>
+
+                    <!-- Upload Area -->
+                    <div id="upload-area" class="upload-area" style="display: none;">
+                        <div class="upload-container">
+                            <div class="upload-dropzone" id="dropzone">
+                                <div class="upload-icon">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                </div>
+                                <div class="upload-text">
+                                    <h3>Drag & Drop files here</h3>
+                                    <p>or click to browse</p>
+                                    <span class="file-types">Supported: PDF, DOC, DOCX, TXT</span>
+                                </div>
+                                <input type="file" id="file-input" accept=".pdf,.doc,.docx,.txt" multiple style="display: none;">
+                            </div>
+                            <div class="upload-options">
+                                <input type="text" id="collection-name" placeholder="Knowledge Base Name (optional)" class="text-input">
+                                <button id="upload-files-btn" class="primary-button" disabled>
+                                    <i class="fas fa-upload"></i>
+                                    Upload Files
+                                </button>
+                                <button id="cancel-upload-btn" class="secondary-button">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Knowledge Bases List -->
+                    <div class="knowledge-bases">
+                        <div id="knowledge-bases-list" class="knowledge-list">
+                            <div class="loading-text">Loading knowledge bases...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sessions Section -->
+            <div id="sessions-section" class="content-section">
+                <div class="sessions-container">
+                    <div class="section-header">
+                        <h2><i class="fas fa-history"></i> Conversation Sessions</h2>
+                        <button id="clear-old-sessions-btn" class="secondary-button">
+                            <i class="fas fa-trash"></i>
+                            Clear Old Sessions
+                        </button>
+                    </div>
+
+                    <div id="sessions-list" class="sessions-list">
+                        <div class="loading-text">Loading sessions...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Section -->
+            <div id="settings-section" class="content-section">
+                <div class="settings-container">
+                    <div class="section-header">
+                        <h2><i class="fas fa-cog"></i> Settings</h2>
+                    </div>
+
+                    <div class="settings-groups">
+                        <div class="settings-group">
+                            <h3>Reasoning Strategies</h3>
+                            <div class="settings-item">
+                                <label>Default Strategy:</label>
+                                <select id="default-strategy" class="select-input">
+                                    <option value="generation">Direct Answer</option>
+                                    <option value="self_ask">Self-Ask Reasoning</option>
+                                    <option value="atomic_decomposition">Atomic Decomposition</option>
+                                </select>
+                            </div>
+                            <div class="strategy-info">
+                                <div class="info-card">
+                                    <h4>Strategy Descriptions:</h4>
+                                    <ul>
+                                        <li><strong>Direct Answer:</strong> Fast, straightforward responses using available context</li>
+                                        <li><strong>Self-Ask:</strong> Breaks complex questions into sub-questions for thorough analysis</li>
+                                        <li><strong>Atomic Decomposition:</strong> Systematic reasoning through atomic facts and logical steps</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <h3>System Information</h3>
+                            <div id="system-info" class="info-card">
+                                <div class="loading-text">Loading system information...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="upload-progress-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Uploading Documents</h3>
+            </div>
+            <div class="modal-body">
+                <div class="upload-progress">
+                    <div class="progress-bar">
+                        <div id="upload-progress-fill" class="progress-fill"></div>
+                    </div>
+                    <div id="upload-status" class="upload-status">Preparing upload...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/app_enhanced.js') }}"></script>
+</body>
+</html>
