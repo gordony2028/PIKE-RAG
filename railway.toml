@@ -2,7 +2,7 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "python webapp/app_standalone.py"
+startCommand = "python webapp/app_railway_full.py"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 
