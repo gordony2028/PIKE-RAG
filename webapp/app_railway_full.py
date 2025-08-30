@@ -664,6 +664,42 @@ def get_sessions():
             'sessions': []
         })
 
+@app.route('/api/reasoning-strategies')
+def get_reasoning_strategies():
+    """Get available reasoning strategies"""
+    try:
+        strategies = [
+            {
+                'id': 'generation',
+                'name': 'Direct Answer',
+                'description': 'Direct question answering with retrieved context',
+                'available': True
+            },
+            {
+                'id': 'self_ask',
+                'name': 'Self-Ask Reasoning',
+                'description': 'Self-questioning reasoning chains for step-by-step problem solving',
+                'available': reasoning_manager is not None
+            },
+            {
+                'id': 'atomic_decomposition',
+                'name': 'Atomic Decomposition',
+                'description': 'Break complex questions into atomic sub-questions',
+                'available': reasoning_manager is not None
+            }
+        ]
+        
+        return jsonify({
+            'success': True,
+            'strategies': strategies
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/api/health')
 def health_check():
     """Health check with system information for settings page"""
@@ -708,13 +744,13 @@ def health_check():
                 'vector_search': doc_processor.chroma_client is not None if doc_processor else False,
                 'openai_integration': openai_connected
             },
-            'components': [
-                f"Document Processor: {'✅ Active' if doc_processor else '❌ Disabled'}",
-                f"Conversation Manager: {'✅ Active' if conversation_manager else '❌ Disabled'}",
-                f"Advanced Reasoning: {'✅ Active' if reasoning_manager else '❌ Disabled'}",
-                f"Vector Search: {'✅ Active' if (doc_processor and doc_processor.chroma_client) else '❌ Disabled'}",
-                f"OpenAI Integration: {'✅ Connected' if openai_connected else '❌ Disconnected'}"
-            ],
+            'components': {
+                'pikerag_initialized': True,  # App is running so core is initialized
+                'azure_openai_connected': openai_connected,
+                'document_processor': doc_processor is not None,
+                'conversation_manager': conversation_manager is not None,
+                'reasoning_manager': reasoning_manager is not None
+            },
             'openai_connected': openai_connected,
             'timestamp': datetime.now().isoformat()
         })
