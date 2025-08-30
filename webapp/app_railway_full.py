@@ -52,10 +52,11 @@ logger = None
 doc_processor = None
 conversation_manager = None
 reasoning_manager = None
+azure_deployment_name = None
 
 def initialize_railway_full():
     """Initialize full-featured PIKE-RAG for Railway"""
-    global openai_client, logger, doc_processor, conversation_manager, reasoning_manager
+    global openai_client, logger, doc_processor, conversation_manager, reasoning_manager, azure_deployment_name
     
     try:
         # Environment setup
@@ -86,11 +87,15 @@ def initialize_railway_full():
                 api_key=os.environ.get('AZURE_OPENAI_API_KEY'),
                 api_version=os.environ.get('OPENAI_API_VERSION', '2024-08-01-preview')
             )
+            # Store the deployment name for Azure OpenAI
+            azure_deployment_name = os.environ.get('AZURE_DEPLOYMENT_NAME', 'gpt-4')
             print("✅ Azure OpenAI client initialized")
         else:
             openai_client = openai.OpenAI(
                 api_key=os.environ.get('OPENAI_API_KEY')
             )
+            # Use standard model name for non-Azure OpenAI
+            azure_deployment_name = 'gpt-4'
             print("✅ Standard OpenAI client initialized")
         
         # Initialize components with lightweight alternatives
@@ -494,7 +499,7 @@ def generate_simple_answer(question: str, sources: List[str], history: List[dict
         
         response = openai_client.chat.completions.create(
             messages=messages,
-            model="gpt-4",
+            model=azure_deployment_name,
             temperature=0.1,
             max_tokens=800
         )
@@ -708,7 +713,7 @@ def health_check():
         try:
             test_response = openai_client.chat.completions.create(
                 messages=[{"role": "user", "content": "Hi"}],
-                model="gpt-4",
+                model=azure_deployment_name,
                 max_tokens=5
             )
             openai_connected = True
