@@ -600,79 +600,133 @@ def get_system_info():
 
 @app.route('/api/knowledge-bases')
 def get_knowledge_bases():
-    """Get available knowledge bases"""
+    """Get available knowledge bases in the format expected by frontend"""
     try:
         if not doc_processor:
-            return jsonify([])
+            return jsonify({'success': True, 'knowledge_bases': []})
         
         documents = doc_processor.get_available_documents()
         
-        # Group documents into knowledge bases
+        # Format knowledge bases as expected by frontend
         knowledge_bases = []
         
         if documents:
+            for doc in documents:
+                knowledge_bases.append({
+                    'name': doc['name'],
+                    'count': doc.get('chunks', 1),
+                    'last_updated': doc.get('processed_at', 'Unknown')
+                })
+        
+        # Add default if no documents
+        if not knowledge_bases:
             knowledge_bases.append({
-                'id': 'documents',
-                'name': 'Uploaded Documents',
-                'description': 'Documents you have uploaded and processed',
-                'document_count': len(documents),
-                'status': 'ready',
-                'documents': documents
+                'name': 'General Knowledge',
+                'count': 0,
+                'last_updated': 'Always available'
             })
         
-        # Default knowledge base
-        knowledge_bases.append({
-            'id': 'general',
-            'name': 'General Knowledge',
-            'description': 'General AI knowledge without specific documents',
-            'document_count': 0,
-            'status': 'ready',
-            'documents': []
+        return jsonify({
+            'success': True,
+            'knowledge_bases': knowledge_bases
         })
-        
-        return jsonify(knowledge_bases)
         
     except Exception as e:
         print(f"Error getting knowledge bases: {e}")
         return jsonify({
-            'error': str(e),
-            'fallback': [{
-                'id': 'general',
+            'success': True,
+            'knowledge_bases': [{
                 'name': 'General Knowledge',
-                'description': 'General AI knowledge (fallback mode)',
-                'document_count': 0,
-                'status': 'ready',
-                'documents': []
+                'count': 0,
+                'last_updated': 'Fallback mode'
             }]
-        }), 500
+        })
+
+@app.route('/api/sessions')
+def get_sessions():
+    """Get conversation sessions"""
+    try:
+        if not conversation_manager:
+            return jsonify({'success': True, 'sessions': []})
+        
+        # Use the built-in list_sessions method
+        sessions_data = conversation_manager.list_sessions()
+        
+        return jsonify({
+            'success': True,
+            'sessions': sessions_data
+        })
+        
+    except Exception as e:
+        print(f"Error getting sessions: {e}")
+        return jsonify({
+            'success': True,
+            'sessions': []
+        })
 
 @app.route('/api/health')
 def health_check():
-    """Health check with full feature status"""
+    """Health check with system information for settings page"""
     try:
         # Test OpenAI connection
-        test_response = openai_client.chat.completions.create(
-            messages=[{"role": "user", "content": "Hi"}],
-            model="gpt-4",
-            max_tokens=5
-        )
+        try:
+            test_response = openai_client.chat.completions.create(
+                messages=[{"role": "user", "content": "Hi"}],
+                model="gpt-4",
+                max_tokens=5
+            )
+            openai_connected = True
+        except:
+            openai_connected = False
+        
+        # Get stats
+        knowledge_bases_count = 0
+        active_sessions_count = 0
+        total_documents = 0
+        
+        if doc_processor:
+            documents = doc_processor.get_available_documents()
+            total_documents = len(documents)
+            knowledge_bases_count = 1 if documents else 1  # General knowledge always available
+            
+        if conversation_manager and hasattr(conversation_manager, 'sessions_dir') and os.path.exists(conversation_manager.sessions_dir):
+            active_sessions_count = len([f for f in os.listdir(conversation_manager.sessions_dir) if f.endswith('.json')])
         
         return jsonify({
             'status': 'healthy',
-            'version': 'railway-full',
+            'version': 'railway-full-v1.0',
+            'deployment': 'Railway',
+            'stats': {
+                'knowledge_bases': knowledge_bases_count,
+                'active_sessions': active_sessions_count,
+                'total_collections_documents': total_documents
+            },
             'features': {
                 'document_upload': doc_processor is not None,
                 'conversation_management': conversation_manager is not None,
                 'advanced_reasoning': reasoning_manager is not None,
-                'vector_search': doc_processor.chroma_client is not None if doc_processor else False
+                'vector_search': doc_processor.chroma_client is not None if doc_processor else False,
+                'openai_integration': openai_connected
             },
-            'openai_connected': bool(test_response),
+            'components': [
+                f"Document Processor: {'✅ Active' if doc_processor else '❌ Disabled'}",
+                f"Conversation Manager: {'✅ Active' if conversation_manager else '❌ Disabled'}",
+                f"Advanced Reasoning: {'✅ Active' if reasoning_manager else '❌ Disabled'}",
+                f"Vector Search: {'✅ Active' if (doc_processor and doc_processor.chroma_client) else '❌ Disabled'}",
+                f"OpenAI Integration: {'✅ Connected' if openai_connected else '❌ Disconnected'}"
+            ],
+            'openai_connected': openai_connected,
             'timestamp': datetime.now().isoformat()
         })
     except Exception as e:
         return jsonify({
             'status': 'unhealthy',
             'error': str(e),
+            'stats': {
+                'knowledge_bases': 0,
+                'active_sessions': 0,  
+                'total_collections_documents': 0
+            },
             'timestamp': datetime.now().isoformat()
         }), 500
 
