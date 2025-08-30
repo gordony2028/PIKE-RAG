@@ -1,33 +1,17 @@
-# Minimal requirements for Railway deployment (under 4GB limit)
-# Core dependencies only - no heavy ML libraries
+# Ultra-minimal requirements for Railway deployment
+# Only essential dependencies to avoid transformers import
 
-# Essential web dependencies
+# Web framework
 Flask>=2.3.0
 Flask-CORS>=4.0.0
 gunicorn>=21.2.0
-Werkzeug>=2.3.0
 
-# Essential PIKE-RAG dependencies (lightweight)
-bs4
-jsonlines
-markdown
-openai
-openpyxl
-pandas
-pickledb
+# Core essentials  
+openai>=1.0.0
 python-dotenv
+pickledb
 dacite
-tabulate
-tqdm
 
-# Lightweight text processing
-langchain
-langchain-openai
-rouge
-
-# Database/storage (lightweight)
-chromadb
-
-# Minimal NLP (avoid heavy transformers)
-rank_bm25
-word2number
+# Basic utilities (very lightweight)
+requests
+urllib3
