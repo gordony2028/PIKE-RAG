@@ -94,7 +94,7 @@ class DocumentProcessorLite:
                         text += page.extract_text() + "\\n"
                 return text
             
-            elif file_type in ['docx', 'doc']:
+            elif file_type == 'docx':
                 if not DocxDocument:
                     return "Error extracting text: python-docx library not available"
                 
@@ -117,7 +117,12 @@ class DocumentProcessorLite:
                     return text if text.strip() else "No readable text found in document"
                 
                 except Exception as docx_error:
-                    return f"Error reading Word document: {str(docx_error)}"
+                    # If it fails, it might be an older .doc file saved as .docx
+                    return f"Error reading Word document: {str(docx_error)}. Note: Only .docx format (Office 2007+) is supported. Older .doc files need to be converted to .docx format."
+            
+            elif file_type == 'doc':
+                # Old .doc format is not supported by python-docx
+                return "Error: .doc format (Office 97-2003) is not supported. Please save the document as .docx format (Office 2007+) and try again."
             
             else:
                 return f"Unsupported file type: {file_type}"

@@ -392,7 +392,13 @@ def upload_file():
         # Validate file type
         filename = secure_filename(file.filename)
         file_ext = filename.split('.')[-1].lower() if '.' in filename else ''
-        supported_extensions = ['pdf', 'doc', 'docx', 'txt']
+        supported_extensions = ['pdf', 'docx', 'txt']  # Removed 'doc' from supported
+        
+        if file_ext == 'doc':
+            return jsonify({
+                'success': False, 
+                'error': 'Old Word format (.doc) is not supported. Please save your document as .docx format (Word 2007 or later) and try again.'
+            }), 400
         
         if file_ext not in supported_extensions:
             return jsonify({
