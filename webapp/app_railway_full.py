@@ -112,8 +112,12 @@ def initialize_railway_full():
             reasoning_manager = ReasoningStrategyManager()
             print("✅ Advanced reasoning strategies loaded")
         else:
-            reasoning_manager = None
-            print("⚠️  Using basic reasoning only")
+            # Create a simple reasoning manager placeholder
+            reasoning_manager = type('SimpleReasoningManager', (), {
+                'available': True,
+                'strategies': ['generation', 'self_ask', 'atomic_decomposition']
+            })()
+            print("✅ Basic reasoning strategies loaded")
         
         print("✅ Full-featured PIKE-RAG for Railway initialized")
         return True
@@ -698,6 +702,57 @@ def get_sessions():
             'success': True,
             'sessions': []
         })
+
+@app.route('/api/knowledge-bases/<collection_name>/files')
+def get_knowledge_base_files(collection_name):
+    """Get files in a specific knowledge base collection"""
+    try:
+        if not doc_processor or not doc_processor.chroma_client:
+            return jsonify({
+                'success': False,
+                'error': 'Document processor not available'
+            }), 400
+        
+        # Get collection details
+        try:
+            collection = doc_processor.chroma_client.get_collection(collection_name)
+            
+            # Get all documents in the collection
+            results = collection.get(include=['metadatas', 'documents'])
+            
+            # Group by filename
+            files_dict = {}
+            for i, metadata in enumerate(results['metadatas']):
+                filename = metadata.get('filename', 'Unknown')
+                if filename not in files_dict:
+                    files_dict[filename] = {
+                        'filename': filename,
+                        'chunks_count': 0,
+                        'file_type': metadata.get('file_type', 'unknown'),
+                        'processed_at': metadata.get('processed_at', 'Unknown')
+                    }
+                files_dict[filename]['chunks_count'] += 1
+            
+            files_list = list(files_dict.values())
+            
+            return jsonify({
+                'success': True,
+                'collection_name': collection_name,
+                'files': files_list,
+                'total_chunks': collection.count()
+            })
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'error': f'Collection not found: {str(e)}'
+            }), 404
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 @app.route('/api/reasoning-strategies')
 def get_reasoning_strategies():
