@@ -42,6 +42,7 @@ CORS(app)
 
 # Configuration
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # Disable caching for development
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
 KNOWLEDGE_BASE_FOLDER = os.path.join(os.path.dirname(__file__), 'knowledge_base')
 SESSIONS_FOLDER = os.path.join(os.path.dirname(__file__), 'sessions')
@@ -371,29 +372,58 @@ def upload_file():
         if file.filename == '':
             return jsonify({'success': False, 'error': 'No file selected'}), 400
         
-        # Save file
+        # Check file size (additional validation beyond Flask's MAX_CONTENT_LENGTH)
+        file.seek(0, 2)  # Seek to end
+        file_size = file.tell()
+        file.seek(0)  # Seek back to beginning
+        
+        print(f"📄 Uploading file: {file.filename}, Size: {file_size} bytes ({file_size/1024/1024:.2f} MB)")
+        
+        if file_size > 16 * 1024 * 1024:  # 16MB limit
+            return jsonify({
+                'success': False, 
+                'error': f'File too large: {file_size/1024/1024:.2f}MB. Maximum allowed: 16MB'
+            }), 400
+        
+        # Validate file type
         filename = secure_filename(file.filename)
+        file_ext = filename.split('.')[-1].lower() if '.' in filename else ''
+        supported_extensions = ['pdf', 'doc', 'docx', 'txt']
+        
+        if file_ext not in supported_extensions:
+            return jsonify({
+                'success': False, 
+                'error': f'Unsupported file type: .{file_ext}. Supported: {", ".join(supported_extensions)}'
+            }), 400
+        
+        # Save file
         filepath = os.path.join(UPLOAD_FOLDER, filename)
         file.save(filepath)
+        print(f"✅ File saved to: {filepath}")
         
         # Process document
+        print(f"🔄 Processing document: {filename}")
         result = doc_processor.process_document(filepath, filename)
         
         if result['success']:
+            print(f"✅ Document processed successfully: {result['chunks']} chunks created")
             return jsonify({
                 'success': True,
                 'filename': filename,
                 'document_id': result['document_id'],
                 'chunks': result['chunks'],
-                'preview': result.get('text_preview', '')
+                'preview': result.get('text_preview', ''),
+                'file_size_mb': round(file_size/1024/1024, 2)
             })
         else:
+            print(f"❌ Document processing failed: {result['error']}")
             return jsonify({
                 'success': False,
                 'error': result['error']
             }), 400
             
     except Exception as e:
+        print(f"❌ Upload error: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/ask', methods=['POST'])

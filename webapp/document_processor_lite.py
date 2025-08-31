@@ -94,12 +94,30 @@ class DocumentProcessorLite:
                         text += page.extract_text() + "\\n"
                 return text
             
-            elif file_type in ['docx', 'doc'] and DocxDocument:
-                doc = DocxDocument(file_path)
-                text = ""
-                for paragraph in doc.paragraphs:
-                    text += paragraph.text + "\\n"
-                return text
+            elif file_type in ['docx', 'doc']:
+                if not DocxDocument:
+                    return "Error extracting text: python-docx library not available"
+                
+                try:
+                    doc = DocxDocument(file_path)
+                    text = ""
+                    for paragraph in doc.paragraphs:
+                        if paragraph.text.strip():  # Skip empty paragraphs
+                            text += paragraph.text + "\\n"
+                    
+                    # If no text was extracted, try tables
+                    if not text.strip():
+                        for table in doc.tables:
+                            for row in table.rows:
+                                for cell in row.cells:
+                                    if cell.text.strip():
+                                        text += cell.text + " "
+                                text += "\\n"
+                    
+                    return text if text.strip() else "No readable text found in document"
+                
+                except Exception as docx_error:
+                    return f"Error reading Word document: {str(docx_error)}"
             
             else:
                 return f"Unsupported file type: {file_type}"
