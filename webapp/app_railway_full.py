@@ -100,10 +100,12 @@ def initialize_railway_full():
             print("✅ Standard OpenAI client initialized")
         
         # Initialize components with lightweight alternatives
+        azure_embedding_deployment = os.environ.get('AZURE_EMBEDDING_DEPLOYMENT', 'text-embedding-ada-002')
         doc_processor = DocumentProcessorLite(
             UPLOAD_FOLDER, 
             KNOWLEDGE_BASE_FOLDER, 
-            openai_client
+            openai_client,
+            azure_embedding_deployment
         )
         
         conversation_manager = ConversationManager(SESSIONS_FOLDER)
@@ -112,11 +114,30 @@ def initialize_railway_full():
             reasoning_manager = ReasoningStrategyManager()
             print("✅ Advanced reasoning strategies loaded")
         else:
-            # Create a simple reasoning manager placeholder
-            reasoning_manager = type('SimpleReasoningManager', (), {
-                'available': True,
-                'strategies': ['generation', 'self_ask', 'atomic_decomposition']
-            })()
+            # Create a simple reasoning manager placeholder with required methods
+            class SimpleReasoningManager:
+                def __init__(self):
+                    self.available = True
+                    self.strategies = ['generation', 'self_ask', 'atomic_decomposition']
+                
+                def process_with_strategy(self, strategy_name, question, context, conversation_history=None, llm_client=None):
+                    """Fallback processing - use basic generation with context"""
+                    try:
+                        # Use the same generate_simple_answer function that's already implemented
+                        answer = generate_simple_answer(question, context or [], conversation_history or [])
+                        return {
+                            'answer': answer,
+                            'rationale': f'Used basic generation (advanced {strategy_name} not available)',
+                            'confidence': 0.7
+                        }
+                    except Exception as e:
+                        return {
+                            'answer': f'Error in fallback reasoning: {str(e)}',
+                            'rationale': f'Fallback failed for {strategy_name}',
+                            'confidence': 0.1
+                        }
+            
+            reasoning_manager = SimpleReasoningManager()
             print("✅ Basic reasoning strategies loaded")
         
         print("✅ Full-featured PIKE-RAG for Railway initialized")

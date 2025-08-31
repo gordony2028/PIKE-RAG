@@ -30,10 +30,11 @@ except ImportError:
 class DocumentProcessorLite:
     """Lightweight document processor using OpenAI embeddings"""
     
-    def __init__(self, upload_dir: str, knowledge_base_dir: str, openai_client=None):
+    def __init__(self, upload_dir: str, knowledge_base_dir: str, openai_client=None, azure_embedding_deployment=None):
         self.upload_dir = upload_dir
         self.knowledge_base_dir = knowledge_base_dir
         self.openai_client = openai_client
+        self.azure_embedding_deployment = azure_embedding_deployment or "text-embedding-ada-002"
         self.chroma_client = None
         
         # Ensure directories exist
@@ -70,7 +71,7 @@ class DocumentProcessorLite:
             embeddings = []
             for text in texts:
                 response = self.openai_client.embeddings.create(
-                    model="text-embedding-ada-002",
+                    model=self.azure_embedding_deployment,
                     input=text[:8000]  # Truncate to max length
                 )
                 embeddings.append(response.data[0].embedding)
